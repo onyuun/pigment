@@ -40,21 +40,25 @@ module.exports = async function handler(req, res) {
 
   const body = req.body && typeof req.body === 'object' ? req.body : {};
   const prompt = typeof body.prompt === 'string' ? body.prompt.trim().slice(0, 120) : '';
+  const useBaseColor = body.useBaseColor !== false;
   const baseColor = normalizeHex(body.baseColor);
   const lighting = body.lighting === 'cool' ? 'cool' : body.lighting === 'warm' ? 'warm' : null;
 
-  if (!prompt || !baseColor || !lighting) {
-    return sendJson(res, 400, { error: 'Prompt, baseColor, and lighting are required.' });
+  if (!prompt || (useBaseColor && (!baseColor || !lighting))) {
+    return sendJson(res, 400, { error: useBaseColor ? 'Prompt, baseColor, and lighting are required.' : 'Prompt is required.' });
   }
   if (!process.env.GEMINI_API_KEY) {
     return sendJson(res, 500, { error: 'GEMINI_API_KEY is not configured on the server.' });
   }
 
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`;
+  const context = useBaseColor
+    ? ` The primary base color is ${baseColor} with ${lighting} lighting. Harmonize the palette with that color.`
+    : ' Base color and lighting are intentionally ignored. Derive the palette solely from the mood description.';
   const requestBody = {
     contents: [{
       parts: [{
-        text: `You are an expert color theorist. The user wants a 5-color palette for the mood: '${prompt}'. The primary base color is ${baseColor} with ${lighting} lighting. Return ONLY a valid JSON array of 5 hex strings. No markdown, no text.`,
+        text: `You are an expert color theorist. The user wants a 5-color palette for the mood: '${prompt}'.${context} Return ONLY a valid JSON array of 5 hex strings. No markdown, no text.`,
       }],
     }],
   };
