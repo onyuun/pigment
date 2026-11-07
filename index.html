@@ -33,15 +33,13 @@
   </svg>
   <a class="skip-link" href="#main">Skip to color studio</a>
   <aside class="sidebar" aria-label="Studio navigation">
-    <a class="brand" href="./" aria-label="Pigment home"><img src="favicon.svg" width="35" height="35" alt=""><span>pigment<span class="brand-dot">.</span></span></a>
+    <a class="brand" href="./" aria-label="Pigment home"><span>pigment<span class="brand-dot">.</span></span></a>
     <div class="sidebar-label">YOUR WORKSPACE</div>
     <nav class="nav-links">
       <button id="studio-button" class="nav-button active" aria-current="page"><svg><use href="#icon-palette"/></svg><span>Color studio</span><span class="nav-active-dot"></span></button>
       <button id="saved-palettes-button" class="nav-button"><svg><use href="#icon-grid"/></svg><span>Saved palettes</span></button>
       <button id="guide-button" class="nav-button"><svg><use href="#icon-book"/></svg><span>Painting guide</span></button>
     </nav>
-    <div class="sidebar-note"><div class="note-mark"><svg><use href="#icon-spark"/></svg></div><h3>Less guessing.<br>More creating.</h3><p>A little color theory.<br>A whole lot of possibility.</p><span class="note-colors"><i></i><i></i><i></i><i></i><i></i></span></div>
-    <div class="sidebar-footer"><span class="status-dot"></span> Made for your next canvas <span class="version">v1.0</span></div>
   </aside>
   <div class="workspace">
     <header class="topbar">
@@ -53,11 +51,10 @@
       </div>
     </header>
     <main id="main">
-      <section class="page-heading"><div><div class="eyebrow"><span></span> THE DIGITAL ARTIST'S TOOLKIT</div><h1>Color, with intention<span>.</span></h1><p>Find your palette. Shape your light. Set the mood.</p></div><button id="save-palette" class="button secondary"><svg><use href="#icon-save"/></svg>Save palette</button></section>
+      <section class="page-heading"><div><h1>Color, with intention<span>.</span></h1></div><button id="save-palette" class="button secondary"><svg><use href="#icon-save"/></svg>Save palette</button></section>
       <div class="studio-grid">
         <section class="card base-card" aria-labelledby="base-title">
           <div class="card-heading"><div class="card-title"><span class="section-icon"><svg><use href="#icon-palette"/></svg></span><h2 id="base-title">Base color & lighting</h2></div><button id="reset-color" class="icon-button" aria-label="Reset base color" title="Reset base color"><svg><use href="#icon-reset"/></svg></button></div>
-          <p class="card-description">One color. A whole spectrum of possibilities.</p>
           <div class="base-layout">
             <div class="color-controls">
               <div class="field-label"><label for="base-color">BASE COLOR</label><span class="hue-readout">H <output id="hue-value">17</output>°</span><button id="random-color" class="inline-action" type="button" title="Explore a random base color" aria-label="Choose a random base color"><svg><use href="#icon-shuffle"/></svg></button></div>
@@ -78,14 +75,12 @@
         </section>
         <section class="card harmony-card" aria-labelledby="harmony-title">
           <div class="card-heading"><div class="card-title"><span class="section-icon"><svg><use href="#icon-wheel"/></svg></span><h2 id="harmony-title">Color harmonies</h2></div><span class="small-badge">HSL WHEEL</span></div>
-          <p class="card-description">Good colors are better together.</p>
           <div class="segmented harmony-selector" aria-label="Color harmony"><button data-harmony="complementary" aria-pressed="false">Complementary</button><button data-harmony="analogous" class="active" aria-pressed="true">Analogous</button><button data-harmony="triadic" aria-pressed="false">Triadic</button><button data-harmony="split" aria-pressed="false">Split-complementary</button></div>
           <div class="harmony-layout"><div class="wheel-wrapper"><canvas id="color-wheel" width="280" height="280" tabindex="0" role="slider" aria-label="Base hue on color wheel. Drag or use arrow keys to change hue." aria-valuemin="0" aria-valuemax="359" aria-valuenow="17"></canvas><div class="wheel-center"><span>BASE HUE</span><strong><output id="wheel-hue">17</output><small>°</small></strong><span class="wheel-center-hint">DRAG TO EXPLORE</span></div></div><div id="harmony-swatches" class="harmony-swatches" aria-label="Harmony colors"></div></div>
           <div class="card-footnote"><svg><use href="#icon-info"/></svg><p id="harmony-description">Neighboring hues for a naturally cohesive palette.</p></div>
         </section>
         <section class="card recipes-card" aria-labelledby="recipes-title">
           <div class="card-heading"><div class="card-title"><span class="section-icon"><svg><use href="#icon-layers"/></svg></span><h2 id="recipes-title">Layer recipes</h2></div><span class="small-badge">PAINT SMARTER</span></div>
-          <p class="card-description">Turn your colors into a brush-ready plan.</p>
           <div class="recipe-row"><div class="recipe-icon shadow-recipe-icon"><svg><use href="#icon-layers"/></svg></div><div><h3>Give your shadows depth <span class="recipe-tag">SHADOW</span></h3><p id="shadow-recipe">For shadows, use your shadow color on a <strong>Multiply</strong> layer at <strong>60% opacity</strong>.</p></div></div>
           <div class="recipe-row"><div class="recipe-icon highlight-recipe-icon"><svg><use href="#icon-sun"/></svg></div><div><h3>Let the light in <span class="recipe-tag">HIGHLIGHT</span></h3><p id="highlight-recipe">For highlights, use your highlight color on an <strong>Add (Glow)</strong> or <strong>Overlay</strong> layer.</p></div></div>
           <div class="recipe-row"><div class="recipe-icon bounce-recipe-icon"><svg><use href="#icon-snow"/></svg></div><div><h3>Reflect some color back <span class="recipe-tag">BOUNCE</span></h3><p id="bounce-recipe">Use your bounce-light color as a restrained reflected fill near the shadow edge.</p></div></div>
@@ -93,10 +88,9 @@
         </section>
         <section class="card mood-card" aria-labelledby="mood-title">
           <div class="card-heading"><div class="card-title"><span class="section-icon"><svg><use href="#icon-spark"/></svg></span><h2 id="mood-title">Set the mood</h2></div><span class="small-badge">5-COLOR PALETTES</span></div>
-          <p class="card-description">A whole atmosphere, in a handful of colors.</p>
-          <form id="mood-prompt-form" class="mood-prompt-form"><label for="mood-prompt">Describe your mood, scene, or atmosphere</label><div class="mood-prompt-row"><input id="mood-prompt" name="mood" type="text" maxlength="120" autocomplete="off" placeholder="Describe your mood…" aria-describedby="mood-prompt-help"><button id="generate-mood" class="button generate-button" type="submit" aria-busy="false"><svg><use href="#icon-spark"/></svg><span class="generate-label">Generate</span></button></div><span id="mood-prompt-help" class="mood-prompt-help">Gemini creates five colors from your description, base color, and lighting mode.</span></form>
+          <form id="mood-prompt-form" class="mood-prompt-form"><label for="mood-prompt">Describe your mood, scene, or atmosphere</label><div class="mood-prompt-row"><input id="mood-prompt" name="mood" type="text" maxlength="120" autocomplete="off" placeholder="Describe your mood…" aria-describedby="mood-prompt-help"><button id="generate-mood" class="button generate-button" type="submit" aria-busy="false"><svg><use href="#icon-spark"/></svg><span class="generate-label">Generate</span></button></div><div class="mood-context-toggle" title="When ON, Gemini harmonizes the palette with your selected base color. When OFF, Gemini ignores the base color and follows only your mood description."><label class="switch-label" for="include-base-color"><input id="include-base-color" type="checkbox" checked aria-describedby="mood-context-help"><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span><span>Harmonize with base color</span></label><span id="mood-context-help" class="mood-context-help">ON · Gemini harmonizes the palette with your selected base color and lighting.</span></div><span id="mood-prompt-help" class="mood-prompt-help">Gemini creates five colors from your description, with optional base-color harmonization.</span></form>
           <div id="mood-swatches" class="mood-swatches" aria-label="Mood palette colors"></div>
-          <p id="mood-description" class="mood-description">Sun-washed terracotta, honeyed light, and a touch of dusk.</p>
+          <p id="mood-description" class="mood-description"></p>
         </section>
       </div>
       <footer class="workspace-footer"><span><svg><use href="#icon-copy"/></svg>Click a light chip to edit. Click a hex code to copy.</span><span><span class="status-dot"></span><span id="grayscale-status">Color view</span><span class="footer-separator">/</span>HSL color space</span></footer>
