@@ -1,4 +1,4 @@
-const GEMINI_MODEL = 'gemini-1.5-flash';
+const GEMINI_MODEL = 'gemini-3.8-flash';
 const HEX_PATTERN = /^#[0-9a-f]{6}$/i;
 
 function normalizeHex(value) {
