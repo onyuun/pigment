@@ -470,32 +470,38 @@
     return copied;
   }
 
-  async function copyHex(value) {
-    const hex = canonicalizeHex(value);
-    if (!hex) {
-      showToast('Copy failed — invalid hex.');
-      return false;
-    }
+async function copyHex(value) {
+  const hex = canonicalizeHex(value);
 
-    let copied = false;
-    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-      try {
-        await navigator.clipboard.writeText(hex);
-        copied = true;
-      } catch (_error) {
-        copied = fallbackCopyText(hex);
-      }
-    } else {
-      copied = fallbackCopyText(hex);
-    }
-
-    if (copied) {
-      showToast(`Hex Copied! ${hex}`);
-    } else {
-      showToast('Copy failed — check clipboard permissions.');
-    }
-    return copied;
+  if (!hex) {
+    showToast('Copy failed — invalid hex.');
+    return false;
   }
+
+  const copyValue = hex.replace(/^#/, '');
+
+  let copied = false;
+
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+    try {
+      await navigator.clipboard.writeText(copyValue);
+      copied = true;
+    } catch (_error) {
+      copied = fallbackCopyText(copyValue);
+    }
+  } else {
+    copied = fallbackCopyText(copyValue);
+  }
+
+  if (copied) {
+    showToast(`Hex Copied! ${hex}`);
+  } else {
+    showToast('Copy failed — check clipboard permissions.');
+  }
+
+  return copied;
+}
+
 
   function updateColorControl(input, dot, hexButton, autoButton, hex, name, isManual) {
     if (input) input.value = hex.toLowerCase();
