@@ -16,5 +16,5 @@ Tech Stack
 
 Frontend: HTML5, Vanilla CSS (Flexbox & CSS Grid), Vanilla JavaScript.
 Backend / Security: Vercel Serverless Functions (/api/generateMood.js) to securely route requests to the Gemini API without exposing credentials in client-side code.
-AI Integration: Google Gemini 1.5 Flash via REST API.
+AI Integration: Google Gemini 3.8 Flash via REST API.
 can you add that its best to run on a laptop since the color picking option on mobile is not a wheel but a manual slider with hue and shadow slider and light slider 
