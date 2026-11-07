@@ -610,10 +610,6 @@
       element.append(strong);
       element.append(document.createTextNode(node.after));
     });
-    const caution = document.createElement('span');
-    caution.className = 'recipe-caution';
-    caution.textContent = ' Starting point only: blend colors and adjust for your compositing setup; a recipe cannot guarantee an exact final match.';
-    element.append(caution);
   }
 
   function renderMoodPalette() {
