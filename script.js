@@ -94,6 +94,7 @@
     mood: 'golden',
     moodPrompt: '',
     customMoodActive: false,
+    includeBaseColor: true,
     grayscale: false,
     moodPalette: [],
   };
@@ -257,6 +258,7 @@
       }
       if (typeof saved.moodPrompt === 'string') state.moodPrompt = saved.moodPrompt.slice(0, 120);
       state.customMoodActive = saved.customMoodActive === true && Boolean(state.moodPrompt);
+      if (typeof saved.includeBaseColor === 'boolean') state.includeBaseColor = saved.includeBaseColor;
     } catch (_error) {
       // Storage is optional; the studio remains usable when it is unavailable.
     }
@@ -276,6 +278,7 @@
         manualColors: state.manualColors,
         moodPrompt: state.moodPrompt,
         customMoodActive: state.customMoodActive,
+        includeBaseColor: state.includeBaseColor,
       }));
     } catch (_error) {
       // Private browsing and blocked storage should not interrupt color work.
@@ -385,6 +388,8 @@
       bounceRecipe: query('#bounce-recipe'),
       moodPrompt: query('#mood-prompt'),
       moodPromptForm: query('#mood-prompt-form'),
+      includeBaseColor: query('#include-base-color'),
+      moodContextHelp: query('#mood-context-help'),
       generateMood: query('#generate-mood'),
       moodSwatches: query('#mood-swatches'),
       moodDescription: query('#mood-description'),
@@ -567,7 +572,12 @@
     const response = await fetch('/api/generateMood', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, baseColor, lighting }),
+      body: JSON.stringify({
+        prompt,
+        baseColor: state.includeBaseColor ? baseColor : null,
+        lighting: state.includeBaseColor ? lighting : null,
+        useBaseColor: state.includeBaseColor,
+      }),
     });
 
     const data = await response.json();
@@ -809,9 +819,15 @@
     ]);
 
     if (dom.moodPrompt && document.activeElement !== dom.moodPrompt) dom.moodPrompt.value = state.moodPrompt;
+    if (dom.includeBaseColor) dom.includeBaseColor.checked = state.includeBaseColor;
+    if (dom.moodContextHelp) dom.moodContextHelp.textContent = state.includeBaseColor
+      ? 'ON · Gemini harmonizes the palette with your selected base color and lighting.'
+      : 'OFF · Gemini follows only the mood description and ignores the selected base color.';
     if (dom.moodDescription) dom.moodDescription.textContent = state.customMoodActive
-      ? `Gemini palette tuned to “${state.moodPrompt}”, your ${state.baseHex} base, and ${state.lighting} lighting.`
-      : 'Describe a mood, scene, or atmosphere to ask Gemini for five colors.';
+      ? state.includeBaseColor
+        ? `Gemini palette tuned to “${state.moodPrompt}”, your ${state.baseHex} base, and ${state.lighting} lighting.`
+        : `Gemini palette tuned only to “${state.moodPrompt}”, independent of your base color.`
+      : '';
     renderMoodPalette();
 
     if (dom.grayscaleToggle) dom.grayscaleToggle.setAttribute('aria-pressed', String(state.grayscale));
@@ -1246,6 +1262,13 @@
       dom.moodPromptForm.addEventListener('submit', (event) => {
         event.preventDefault();
         generateCustomMood();
+      });
+    }
+    if (dom.includeBaseColor) {
+      dom.includeBaseColor.addEventListener('change', () => {
+        state.includeBaseColor = dom.includeBaseColor.checked;
+        renderColorState();
+        persistState();
       });
     }
     if (dom.grayscaleToggle) dom.grayscaleToggle.addEventListener('click', updateGrayscale);
