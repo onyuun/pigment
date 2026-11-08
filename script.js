@@ -14,13 +14,6 @@
     split: [0, 150, 210],
   });
 
-  const HARMONY_DESCRIPTIONS = Object.freeze({
-    complementary: 'A high-contrast pair for focal accents, graphic silhouettes, and decisive color separation.',
-    analogous: 'A close-knit three-color flow that keeps a painting calm while giving the eye gentle movement.',
-    triadic: 'Three evenly spaced hues for a balanced, energetic palette with clear visual hierarchy.',
-    split: 'A softer alternative to complementary contrast: one anchor hue plus two neighbors of its opposite.',
-  });
-
   const LIGHTING_COPY = Object.freeze({
     warm: {
       label: 'Warm lighting',
@@ -97,6 +90,12 @@
     includeBaseColor: true,
     grayscale: false,
     moodPalette: [],
+    recipeSettings: {
+      colors: { shadow: null, highlight: null, bounce: null },
+      opacity: { shadow: 60, highlight: 25, bounce: 25 },
+      visibility: { shadow: true, highlight: true, bounce: true },
+      highlightMode: 'add',
+    },
   };
 
   let dom = {};
@@ -259,6 +258,21 @@
       if (typeof saved.moodPrompt === 'string') state.moodPrompt = saved.moodPrompt.slice(0, 120);
       state.customMoodActive = saved.customMoodActive === true && Boolean(state.moodPrompt);
       if (typeof saved.includeBaseColor === 'boolean') state.includeBaseColor = saved.includeBaseColor;
+      if (saved.recipeSettings && typeof saved.recipeSettings === 'object') {
+        const recipe = saved.recipeSettings;
+        ['shadow', 'highlight', 'bounce'].forEach((name) => {
+          const color = canonicalizeHex(recipe.colors && recipe.colors[name]);
+          if (color) state.recipeSettings.colors[name] = color;
+          const opacity = Number(recipe.opacity && recipe.opacity[name]);
+          if (Number.isFinite(opacity)) state.recipeSettings.opacity[name] = clamp(opacity, 0, 100);
+          if (recipe.visibility && typeof recipe.visibility[name] === 'boolean') {
+            state.recipeSettings.visibility[name] = recipe.visibility[name];
+          }
+        });
+        if (recipe.highlightMode === 'add' || recipe.highlightMode === 'overlay') {
+          state.recipeSettings.highlightMode = recipe.highlightMode;
+        }
+      }
     } catch (_error) {
       // Storage is optional; the studio remains usable when it is unavailable.
     }
@@ -277,9 +291,10 @@
         visibility: state.visibility,
         manualColors: state.manualColors,
         moodPrompt: state.moodPrompt,
-        customMoodActive: state.customMoodActive,
-        includeBaseColor: state.includeBaseColor,
-      }));
+      customMoodActive: state.customMoodActive,
+      includeBaseColor: state.includeBaseColor,
+      recipeSettings: state.recipeSettings,
+    }));
     } catch (_error) {
       // Private browsing and blocked storage should not interrupt color work.
     }
@@ -319,6 +334,14 @@
       shadow: state.manualColors.shadow || automaticShadow,
       highlight: state.manualColors.highlight || automaticHighlight,
       bounce: state.manualColors.bounce || automaticBounce,
+    };
+  }
+
+  function getRecipeColors(derivedColors = getDerivedColors()) {
+    return {
+      shadow: state.recipeSettings.colors.shadow || derivedColors.shadow,
+      highlight: state.recipeSettings.colors.highlight || derivedColors.highlight,
+      bounce: state.recipeSettings.colors.bounce || derivedColors.bounce,
     };
   }
 
@@ -362,7 +385,6 @@
       wheelHue: query('#wheel-hue'),
       canvas: query('#color-wheel'),
       harmonySwatches: query('#harmony-swatches'),
-      harmonyDescription: query('#harmony-description'),
       shadowColor: query('#shadow-color'),
       shadowDot: query('#shadow-swatch .color-dot'),
       shadowHex: query('#shadow-hex'),
@@ -382,6 +404,25 @@
       highlightShift: query('#highlight-shift'),
       bounceShift: query('#bounce-shift'),
       sphere: query('#sphere'),
+      recipePreviewSphere: query('#recipe-preview-sphere'),
+      recipeColorInputs: {
+        shadow: query('#recipe-shadow-color'),
+        highlight: query('#recipe-highlight-color'),
+        bounce: query('#recipe-bounce-color'),
+      },
+      recipeOpacityInputs: {
+        shadow: query('#recipe-shadow-opacity'),
+        highlight: query('#recipe-highlight-opacity'),
+        bounce: query('#recipe-bounce-opacity'),
+      },
+      recipeOpacityValues: {
+        shadow: query('#recipe-shadow-opacity-value'),
+        highlight: query('#recipe-highlight-opacity-value'),
+        bounce: query('#recipe-bounce-opacity-value'),
+      },
+      recipeVisibilityButtons: Array.from(document.querySelectorAll('[data-recipe-visibility]')),
+      recipeHighlightMode: query('#recipe-highlight-mode'),
+      resetRecipes: query('#reset-recipes'),
       lightingLabel: query('#lighting-label'),
       shadowRecipe: query('#shadow-recipe'),
       highlightRecipe: query('#highlight-recipe'),
@@ -389,7 +430,6 @@
       moodPrompt: query('#mood-prompt'),
       moodPromptForm: query('#mood-prompt-form'),
       includeBaseColor: query('#include-base-color'),
-      moodContextHelp: query('#mood-context-help'),
       generateMood: query('#generate-mood'),
       moodSwatches: query('#mood-swatches'),
       moodDescription: query('#mood-description'),
@@ -409,7 +449,9 @@
       exportDialog: query('#export-dialog'),
       exportSummary: query('#export-summary'),
       exportCss: query('#export-css'),
-      exportGpl: query('#export-gpl'),
+      exportCsp: query('#export-csp'),
+      exportPng: query('#export-png'),
+      exportJpg: query('#export-jpg'),
       studioButton: query('#studio-button'),
       year: query('#year'),
       lightingButtons: Array.from(document.querySelectorAll('[data-lighting]')),
@@ -574,7 +616,7 @@ async function copyHex(value) {
     return button;
   }
 
-  async function fetchGeminiPalette(prompt, baseColor, lighting) {
+  async function fetchMoodPalette(prompt, baseColor, lighting) {
     const response = await fetch('/api/generateMood', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -592,7 +634,7 @@ async function copyHex(value) {
 
     const colors = data.colors.map((value) => canonicalizeHex(value));
     if (colors.length !== 5) throw new Error('Palette API must return exactly five hex colors.');
-    if (colors.some((value) => !value)) throw new Error('Gemini returned a non-hex color.');
+    if (colors.some((value) => !value)) throw new Error('The palette service returned a non-hex color.');
     return colors;
   }
 
@@ -749,6 +791,159 @@ async function copyHex(value) {
     if (dom.hueValue) dom.hueValue.textContent = String(Math.round(normalizeHue(hue)));
   }
 
+  function smoothstep(edge0, edge1, value) {
+    const t = clamp((value - edge0) / (edge1 - edge0), 0, 1);
+    return t * t * (3 - 2 * t);
+  }
+
+  function blendChannel(destination, source, opacity, mode) {
+    let blended = source;
+    if (mode === 'multiply') blended = destination * source;
+    if (mode === 'screen') blended = 1 - (1 - destination) * (1 - source);
+    if (mode === 'overlay') {
+      blended = destination <= 0.5
+        ? 2 * destination * source
+        : 1 - 2 * (1 - destination) * (1 - source);
+    }
+    if (mode === 'add') blended = Math.min(1, destination + source);
+    return destination * (1 - opacity) + blended * opacity;
+  }
+
+  function drawRecipeSphere(canvas, baseHex, recipeColors) {
+    if (!canvas || typeof canvas.getContext !== 'function') return;
+    const context = canvas.getContext('2d');
+    if (!context) return;
+
+    const width = canvas.width;
+    const height = canvas.height;
+    const image = context.createImageData(width, height);
+    const base = parseHex(baseHex) || parseHex(DEFAULT_HEX);
+    const shadow = parseHex(recipeColors.shadow) || parseHex('#884078');
+    const highlight = parseHex(recipeColors.highlight) || parseHex('#E8C4AE');
+    const bounce = parseHex(recipeColors.bounce) || parseHex('#91A8B2');
+    const settings = state.recipeSettings;
+    const centerX = (width - 1) / 2;
+    const centerY = (height - 1) / 2;
+    const radius = Math.min(width, height) * 0.43;
+    const lightLength = Math.hypot(-0.48, -0.57, 0.67);
+    const lightX = -0.48 / lightLength;
+    const lightY = -0.57 / lightLength;
+    const lightZ = 0.67 / lightLength;
+    const highlightMode = settings.highlightMode === 'overlay' ? 'overlay' : 'add';
+    const shadowOpacity = clamp(settings.opacity.shadow, 0, 100) / 100;
+    const highlightOpacity = clamp(settings.opacity.highlight, 0, 100) / 100;
+    const bounceOpacity = clamp(settings.opacity.bounce, 0, 100) / 100;
+
+    for (let y = 0; y < height; y += 1) {
+      const ny = (y - centerY) / radius;
+      for (let x = 0; x < width; x += 1) {
+        const nx = (x - centerX) / radius;
+        const radialSquared = nx * nx + ny * ny;
+        if (radialSquared > 1) continue;
+
+        const radial = Math.sqrt(radialSquared);
+        const normalZ = Math.sqrt(Math.max(0, 1 - radialSquared));
+        const diffuse = Math.max(0, nx * lightX + ny * lightY + normalZ * lightZ);
+        const edgeOcclusion = smoothstep(0.68, 1, radial) * 0.13;
+        const illumination = clamp(0.58 + diffuse * 0.42 - edgeOcclusion, 0, 1);
+        let red = (base.r / 255) * illumination;
+        let green = (base.g / 255) * illumination;
+        let blue = (base.b / 255) * illumination;
+
+        const shadowMask = smoothstep(-0.3, 0.68, nx * 0.55 + ny * 0.52 + radial * 0.3);
+        if (settings.visibility.shadow) {
+          const alpha = shadowOpacity * shadowMask;
+          red = blendChannel(red, shadow.r / 255, alpha, 'multiply');
+          green = blendChannel(green, shadow.g / 255, alpha, 'multiply');
+          blue = blendChannel(blue, shadow.b / 255, alpha, 'multiply');
+        }
+
+        const highlightDistance = ((nx + 0.34) ** 2) / 0.2 + ((ny + 0.43) ** 2) / 0.17;
+        const highlightMask = Math.exp(-highlightDistance * 1.25);
+        if (settings.visibility.highlight) {
+          const alpha = highlightOpacity * highlightMask;
+          red = blendChannel(red, highlight.r / 255, alpha, highlightMode);
+          green = blendChannel(green, highlight.g / 255, alpha, highlightMode);
+          blue = blendChannel(blue, highlight.b / 255, alpha, highlightMode);
+        }
+
+        // A reflected Screen light should read as a soft crescent, not a flat fill:
+        // keep it close to the lower-right silhouette and fade it in both directions.
+        const bounceRadius = Math.exp(-(((radial - 0.79) / 0.22) ** 2));
+        const bounceAngle = Math.atan2(ny, nx);
+        const targetBounceAngle = 55 * DEG_TO_RAD;
+        const angleDelta = Math.atan2(
+          Math.sin(bounceAngle - targetBounceAngle),
+          Math.cos(bounceAngle - targetBounceAngle),
+        );
+        const bounceAngleFalloff = Math.exp(-((angleDelta / 0.72) ** 2));
+        const bounceShadowEdge = smoothstep(-0.08, 0.58, nx + ny * 0.72);
+        const bounceEdgeFade = smoothstep(0.42, 0.94, radial);
+        const bounceMask = clamp(
+          bounceRadius * bounceAngleFalloff * bounceShadowEdge * bounceEdgeFade * 1.12,
+          0,
+          1,
+        );
+        if (settings.visibility.bounce) {
+          const alpha = bounceOpacity * bounceMask * 0.72;
+          red = blendChannel(red, bounce.r / 255, alpha, 'screen');
+          green = blendChannel(green, bounce.g / 255, alpha, 'screen');
+          blue = blendChannel(blue, bounce.b / 255, alpha, 'screen');
+        }
+
+        const specular = Math.exp(-highlightDistance * 5.2) * 0.075;
+        red = blendChannel(red, 1, specular, 'screen');
+        green = blendChannel(green, 1, specular, 'screen');
+        blue = blendChannel(blue, 1, specular, 'screen');
+
+        const edgeAlpha = clamp((1 - radial) * radius + 0.5, 0, 1);
+        const index = (y * width + x) * 4;
+        image.data[index] = Math.round(clamp(red * 255, 0, 255));
+        image.data[index + 1] = Math.round(clamp(green * 255, 0, 255));
+        image.data[index + 2] = Math.round(clamp(blue * 255, 0, 255));
+        image.data[index + 3] = Math.round(edgeAlpha * 255);
+      }
+    }
+    context.clearRect(0, 0, width, height);
+    context.putImageData(image, 0, 0);
+  }
+
+  function renderRecipePreview(derivedColors, recipeColors) {
+    const settings = state.recipeSettings;
+    ['shadow', 'highlight', 'bounce'].forEach((name) => {
+      const colorInput = dom.recipeColorInputs[name];
+      const opacityInput = dom.recipeOpacityInputs[name];
+      const opacityValue = dom.recipeOpacityValues[name];
+      if (colorInput) colorInput.value = recipeColors[name].toLowerCase();
+      if (opacityInput) opacityInput.value = String(settings.opacity[name]);
+      if (opacityValue) opacityValue.textContent = `${Math.round(settings.opacity[name])}%`;
+    });
+    dom.recipeVisibilityButtons.forEach((button) => {
+      const name = button.dataset.recipeVisibility;
+      const visible = settings.visibility[name] !== false;
+      const stateLabel = query('.recipe-layer-state', button);
+      button.setAttribute('aria-pressed', String(visible));
+      button.setAttribute('aria-label', `${visible ? 'Turn off' : 'Turn on'} ${name} recipe layer`);
+      button.classList.toggle('is-hidden', !visible);
+      if (stateLabel) stateLabel.textContent = visible ? 'ON' : 'OFF';
+    });
+    if (dom.recipeHighlightMode) dom.recipeHighlightMode.value = settings.highlightMode;
+    drawRecipeSphere(dom.recipePreviewSphere, derivedColors.baseHex, recipeColors);
+    return recipeColors;
+  }
+
+  function resetRecipeSettings() {
+    state.recipeSettings = {
+      colors: { shadow: null, highlight: null, bounce: null },
+      opacity: { shadow: 60, highlight: 25, bounce: 25 },
+      visibility: { shadow: true, highlight: true, bounce: true },
+      highlightMode: 'add',
+    };
+    renderColorState();
+    persistState();
+    showToast('Layer recipes reset to generated defaults.');
+  }
+
   function renderColorState() {
     const colors = getDerivedColors();
     const base = colors.base;
@@ -807,28 +1002,26 @@ async function copyHex(value) {
     const harmonyHues = getHarmonyHues(base.h);
     const harmonyColors = getHarmonyColors(base.h, base.s, base.l);
     renderHarmonySwatches(harmonyColors, harmonyHues);
-    if (dom.harmonyDescription) dom.harmonyDescription.textContent = HARMONY_DESCRIPTIONS[state.harmony];
 
-    renderRecipe(dom.shadowRecipe, 'For shadows, use', colors.shadow, [
-      { before: ' on a ', mode: 'Multiply 60%', after: ' layer. ' },
+    const recipeColors = getRecipeColors(colors);
+    renderRecipePreview(colors, recipeColors);
+    renderRecipe(dom.shadowRecipe, 'For shadows, use', recipeColors.shadow, [
+      { before: ' on a ', mode: `Multiply ${Math.round(state.recipeSettings.opacity.shadow)}%`, after: ' opacity layer. ' },
     ]);
-    renderRecipe(dom.highlightRecipe, 'For highlights and rim light, use', colors.highlight, [
-      { before: ' with ', mode: 'Add (Glow) 25%', after: ' for luminous accents, or ' },
-      { before: '', mode: 'Overlay 40%', after: ' for a firmer lift. ' },
+    const highlightModeName = state.recipeSettings.highlightMode === 'overlay' ? 'Overlay' : 'Add (Glow)';
+    renderRecipe(dom.highlightRecipe, 'For highlights and rim light, use', recipeColors.highlight, [
+      { before: ' on a ', mode: `${highlightModeName} ${Math.round(state.recipeSettings.opacity.highlight)}%`, after: ' opacity layer. ' },
     ]);
-    renderRecipe(dom.bounceRecipe, 'For reflected fill, use', colors.bounce, [
-      { before: ' near the shadow edge on a ', mode: 'Screen 25%', after: ' layer. ' },
+    renderRecipe(dom.bounceRecipe, 'For reflected fill, use', recipeColors.bounce, [
+      { before: ' as a soft bottom-right crescent hugging the shadow edge on a ', mode: `Screen ${Math.round(state.recipeSettings.opacity.bounce)}%`, after: ' opacity layer. ' },
     ]);
 
     if (dom.moodPrompt && document.activeElement !== dom.moodPrompt) dom.moodPrompt.value = state.moodPrompt;
     if (dom.includeBaseColor) dom.includeBaseColor.checked = state.includeBaseColor;
-    if (dom.moodContextHelp) dom.moodContextHelp.textContent = state.includeBaseColor
-      ? 'ON · Gemini harmonizes the palette with your selected base color and lighting.'
-      : 'OFF · Gemini follows only the mood description and ignores the selected base color.';
     if (dom.moodDescription) dom.moodDescription.textContent = state.customMoodActive
       ? state.includeBaseColor
-        ? `Gemini palette tuned to “${state.moodPrompt}”, your ${state.baseHex} base, and ${state.lighting} lighting.`
-        : `Gemini palette tuned only to “${state.moodPrompt}”, independent of your base color.`
+        ? `Palette tuned to “${state.moodPrompt}”, your ${state.baseHex} base, and ${state.lighting} lighting.`
+        : `Palette tuned only to “${state.moodPrompt}”, independent of your base color.`
       : '';
     renderMoodPalette();
 
@@ -878,19 +1071,19 @@ async function copyHex(value) {
 
     setGenerateLoading(true);
     try {
-      const colors = await fetchGeminiPalette(prompt, state.baseHex, state.lighting);
+      const colors = await fetchMoodPalette(prompt, state.baseHex, state.lighting);
       state.moodPrompt = prompt;
       state.customMoodActive = true;
       state.moodPalette = colors.map((hex, index) => ({
-        name: `Gemini ${String(index + 1).padStart(2, '0')}`,
+        name: `Generated ${String(index + 1).padStart(2, '0')}`,
         hex,
       }));
       renderColorState();
       persistState();
-      showToast('Gemini generated a five-color mood palette.');
+      showToast('Generated a five-color mood palette.');
       return true;
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Gemini could not generate a palette.');
+      showToast(error instanceof Error ? error.message : 'Could not generate a palette.');
       return false;
     } finally {
       setGenerateLoading(false);
@@ -946,9 +1139,10 @@ async function copyHex(value) {
 
   function getCurrentPaletteColors() {
     const colors = getDerivedColors();
+    const recipeColors = getRecipeColors(colors);
     const harmony = getHarmonyColors(colors.base.h, colors.base.s, colors.base.l);
     const mood = (state.moodPalette || []).map((entry) => entry.hex);
-    return uniqueHexes([colors.shadow, colors.baseHex, colors.highlight, colors.bounce, ...harmony, ...mood]);
+    return uniqueHexes([recipeColors.shadow, colors.baseHex, recipeColors.highlight, recipeColors.bounce, ...harmony, ...mood]);
   }
 
   function readSavedPalettes() {
@@ -1055,12 +1249,12 @@ async function copyHex(value) {
 
   function renderExportSummary() {
     if (!dom.exportSummary) return;
-    const count = getCurrentPaletteColors().length;
-    dom.exportSummary.textContent = `${count} colors, ready for your next canvas.`;
+    dom.exportSummary.textContent = '';
   }
 
   function getPaletteEntries() {
     const colors = getDerivedColors();
+    const recipeColors = getRecipeColors(colors);
     const baseHsl = colors.base;
     const harmony = getHarmonyColors(baseHsl.h, baseHsl.s, baseHsl.l);
     const mood = (state.moodPalette || []).map((entry) => ({
@@ -1068,10 +1262,10 @@ async function copyHex(value) {
       name: entry.name || 'Mood color',
     }));
     const entries = [
-      { hex: colors.shadow, name: 'Shadow' },
+      { hex: recipeColors.shadow, name: 'Shadow' },
       { hex: colors.baseHex, name: 'Base' },
-      { hex: colors.highlight, name: 'Highlight' },
-      { hex: colors.bounce, name: 'Bounce Light' },
+      { hex: recipeColors.highlight, name: 'Highlight' },
+      { hex: recipeColors.bounce, name: 'Bounce Light' },
     ];
     harmony.forEach((hex, index) => entries.push({
       hex,
@@ -1087,11 +1281,6 @@ async function copyHex(value) {
     });
   }
 
-  function hexToRgbText(hex) {
-    const rgb = parseHex(hex);
-    return rgb ? `${rgb.r} ${rgb.g} ${rgb.b}` : '0 0 0';
-  }
-
   function downloadText(filename, content, mimeType) {
     const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
@@ -1105,17 +1294,33 @@ async function copyHex(value) {
     window.setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
+  function downloadBlob(filename, blob) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+
   function exportCss() {
     const colors = getDerivedColors();
+    const recipeColors = getRecipeColors(colors);
     const entries = getPaletteEntries();
     const harmony = entries.filter((entry) => entry.name.indexOf('Harmony') === 0);
     const lines = [
       '/* Pigment palette export */',
       ':root {',
-      `  --pigment-shadow: ${colors.shadow};`,
+      `  --pigment-shadow: ${recipeColors.shadow};`,
       `  --pigment-base: ${colors.baseHex};`,
-      `  --pigment-highlight: ${colors.highlight};`,
-      `  --pigment-bounce: ${colors.bounce};`,
+      `  --pigment-highlight: ${recipeColors.highlight};`,
+      `  --pigment-bounce: ${recipeColors.bounce};`,
+      `  --pigment-shadow-opacity: ${Math.round(state.recipeSettings.opacity.shadow)}%;`,
+      `  --pigment-highlight-opacity: ${Math.round(state.recipeSettings.opacity.highlight)}%;`,
+      `  --pigment-bounce-opacity: ${Math.round(state.recipeSettings.opacity.bounce)}%;`,
     ];
     harmony.forEach((entry, index) => lines.push(`  --pigment-harmony-${String(index + 1).padStart(2, '0')}: ${entry.hex};`));
     const moodEntries = entries.filter((entry) => (state.moodPalette || []).some((color) => color.name === entry.name));
@@ -1125,17 +1330,194 @@ async function copyHex(value) {
     showToast('CSS palette exported.');
   }
 
-  function exportGpl() {
+  function exportClipStudioPalette() {
     const entries = getPaletteEntries();
-    const lines = [
-      'GIMP Palette',
-      'Name: Pigment Palette',
-      `Columns: ${Math.min(5, Math.max(1, entries.length))}`,
-      '#',
+    const name = 'Pigment Palette';
+    const encoder = new TextEncoder();
+    const asciiName = Uint8Array.from(name, (character) => character.charCodeAt(0));
+    const utf8Name = encoder.encode(name);
+    const headerLength = 2 + asciiName.length + 4 + 2 + utf8Name.length;
+    const colorDataLength = entries.length * 12;
+    const bytes = new Uint8Array(6 + 4 + headerLength + 12 + colorDataLength);
+    const view = new DataView(bytes.buffer);
+    bytes.set(encoder.encode('SLCC'), 0);
+    view.setUint16(4, 256, true);
+    view.setInt32(6, headerLength, true);
+    let offset = 10;
+    view.setUint16(offset, asciiName.length, true);
+    offset += 2;
+    bytes.set(asciiName, offset);
+    offset += asciiName.length;
+    view.setInt32(offset, 0, true);
+    offset += 4;
+    view.setUint16(offset, utf8Name.length, true);
+    offset += 2;
+    bytes.set(utf8Name, offset);
+    offset += utf8Name.length;
+    view.setInt32(offset, 4, true);
+    offset += 4;
+    view.setInt32(offset, entries.length, true);
+    offset += 4;
+    view.setInt32(offset, colorDataLength, true);
+    offset += 4;
+    entries.forEach((entry) => {
+      const rgb = parseHex(entry.hex) || { r: 0, g: 0, b: 0 };
+      view.setInt32(offset, 8, true);
+      offset += 4;
+      bytes[offset] = rgb.r;
+      bytes[offset + 1] = rgb.g;
+      bytes[offset + 2] = rgb.b;
+      bytes[offset + 3] = 255;
+      offset += 4;
+      view.setInt32(offset, 0, true);
+      offset += 4;
+    });
+    downloadBlob('pigment-color-set.cls', new Blob([bytes], { type: 'application/octet-stream' }));
+    showToast('Clip Studio Paint color set exported.');
+  }
+
+  function fillRoundedRect(context, x, y, width, height, radius, fill, stroke) {
+    context.beginPath();
+    if (typeof context.roundRect === 'function') {
+      context.roundRect(x, y, width, height, radius);
+    } else {
+      context.rect(x, y, width, height);
+    }
+    if (fill) {
+      context.fillStyle = fill;
+      context.fill();
+    }
+    if (stroke) {
+      context.strokeStyle = stroke;
+      context.lineWidth = 1;
+      context.stroke();
+    }
+  }
+
+  function createPaletteExportCanvas() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1600;
+    canvas.height = 900;
+    const context = canvas.getContext('2d');
+    if (!context) return null;
+
+    const width = canvas.width;
+    const entries = getPaletteEntries();
+    const colors = getDerivedColors();
+    const recipeColors = getRecipeColors(colors);
+    const layerInfo = [
+      { name: 'Shadow', hex: recipeColors.shadow, mode: 'Multiply', opacity: state.recipeSettings.opacity.shadow, enabled: state.recipeSettings.visibility.shadow },
+      { name: 'Highlight', hex: recipeColors.highlight, mode: state.recipeSettings.highlightMode === 'overlay' ? 'Overlay' : 'Add (Glow)', opacity: state.recipeSettings.opacity.highlight, enabled: state.recipeSettings.visibility.highlight },
+      { name: 'Bounce light', hex: recipeColors.bounce, mode: 'Screen', opacity: state.recipeSettings.opacity.bounce, enabled: state.recipeSettings.visibility.bounce },
     ];
-    entries.forEach((entry) => lines.push(`${hexToRgbText(entry.hex)}\t${entry.name}`));
-    downloadText('pigment-palette.gpl', `${lines.join('\n')}\n`, 'text/plain;charset=utf-8');
-    showToast('GIMP palette exported.');
+
+    context.fillStyle = '#151517';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = '#eeeaf2';
+    context.font = '600 29px Arial, sans-serif';
+    context.fillText('pigment.', 72, 66);
+    context.fillStyle = '#a49aaf';
+    context.font = '12px Arial, sans-serif';
+    context.fillText(`${LIGHTING_COPY[state.lighting].label.toUpperCase()}  ·  ${state.harmony.toUpperCase()} HARMONY`, 72, 91);
+    context.textAlign = 'right';
+    context.fillStyle = '#898492';
+    context.font = '11px Arial, sans-serif';
+    context.fillText('COLOR PALETTE  /  LAYER PREVIEW', width - 72, 65);
+    context.textAlign = 'left';
+
+    fillRoundedRect(context, 64, 112, width - 128, 226, 12, '#1d1d20', '#333137');
+    context.fillStyle = '#b8b0c3';
+    context.font = '600 10px Arial, sans-serif';
+    context.fillText(`PALETTE  ·  ${entries.length} COLORS`, 88, 141);
+    const left = 88;
+    const gap = 9;
+    const available = width - 176;
+    const tileWidth = Math.min(150, (available - gap * Math.max(0, entries.length - 1)) / Math.max(1, entries.length));
+    const rowWidth = tileWidth * entries.length + gap * Math.max(0, entries.length - 1);
+    const startX = left + (available - rowWidth) / 2;
+    entries.forEach((entry, index) => {
+      const x = startX + index * (tileWidth + gap);
+      fillRoundedRect(context, x, 158, tileWidth, 147, 6, '#252428', '#39363f');
+      fillRoundedRect(context, x + 1, 159, tileWidth - 2, 76, 5, entry.hex, null);
+      context.fillStyle = '#ded9e4';
+      context.font = '600 10px Arial, sans-serif';
+      const label = entry.name.length > 17 ? `${entry.name.slice(0, 16)}…` : entry.name;
+      context.fillText(label, x + 9, 258);
+      context.fillStyle = '#b8b0c3';
+      context.font = '10px monospace';
+      context.fillText(entry.hex, x + 9, 282);
+    });
+
+    context.fillStyle = '#b8b0c3';
+    context.font = '600 10px Arial, sans-serif';
+    context.fillText('LAYER PREVIEW  ·  LIVE BLEND RESULT', 72, 384);
+    context.textAlign = 'right';
+    context.fillStyle = '#85808e';
+    context.font = '10px monospace';
+    context.fillText(`BASE ${colors.baseHex}  ·  ${LIGHTING_COPY[state.lighting].label}`, width - 72, 384);
+    context.textAlign = 'left';
+    fillRoundedRect(context, 64, 402, width - 128, 416, 12, '#1d1d20', '#333137');
+
+    fillRoundedRect(context, 88, 426, 284, 366, 8, '#222126', '#35323b');
+    context.fillStyle = '#9e97a8';
+    context.font = '600 9px Arial, sans-serif';
+    context.fillText('PREVIEW', 108, 451);
+    const sphereCanvas = document.createElement('canvas');
+    sphereCanvas.width = 300;
+    sphereCanvas.height = 300;
+    drawRecipeSphere(sphereCanvas, colors.baseHex, recipeColors);
+    context.save();
+    context.fillStyle = '#09090c70';
+    context.beginPath();
+    context.ellipse(230, 712, 96, 18, -0.12, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+    context.drawImage(sphereCanvas, 110, 470, 240, 240);
+    layerInfo.forEach((layer, index) => {
+      const y = 426 + index * 117;
+      fillRoundedRect(context, 396, y, 1080, 104, 7, '#242328', '#38353e');
+      fillRoundedRect(context, 414, y + 17, 70, 70, 5, layer.hex, '#ffffff24');
+      context.fillStyle = '#e4dfe9';
+      context.font = '600 14px Arial, sans-serif';
+      context.fillText(layer.name, 510, y + 37);
+      context.fillStyle = '#bcb4c7';
+      context.font = '11px monospace';
+      context.fillText(layer.hex, 510, y + 61);
+      context.fillStyle = '#8e8997';
+      context.font = '9px Arial, sans-serif';
+      context.fillText('BLEND MODE', 740, y + 34);
+      context.fillStyle = '#d0c9d8';
+      context.font = '600 11px Arial, sans-serif';
+      context.fillText(layer.mode, 740, y + 57);
+      context.fillStyle = '#8e8997';
+      context.font = '9px Arial, sans-serif';
+      context.fillText('OPACITY', 990, y + 34);
+      context.fillStyle = '#d0c9d8';
+      context.font = '600 11px Arial, sans-serif';
+      context.fillText(`${Math.round(layer.opacity)}%`, 990, y + 57);
+      context.fillStyle = layer.enabled ? '#a4b5a7' : '#77717f';
+      context.font = '600 9px Arial, sans-serif';
+      context.fillText(layer.enabled ? 'ON' : 'OFF', 1348, y + 51);
+    });
+
+    return canvas;
+  }
+
+  function exportPaletteImage(extension) {
+    const canvas = createPaletteExportCanvas();
+    if (!canvas) {
+      showToast('Image export is unavailable in this browser.');
+      return;
+    }
+    const isJpg = extension === 'jpg';
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        showToast('The palette image could not be created.');
+        return;
+      }
+      downloadBlob(`pigment-palette-preview.${isJpg ? 'jpg' : 'png'}`, blob);
+      showToast(`${isJpg ? 'JPG' : 'PNG'} palette image exported.`);
+    }, isJpg ? 'image/jpeg' : 'image/png', isJpg ? 0.94 : undefined);
   }
 
   function pointerHue(event) {
@@ -1241,6 +1623,51 @@ async function copyHex(value) {
       });
     });
 
+    Object.keys(dom.recipeColorInputs).forEach((name) => {
+      const input = dom.recipeColorInputs[name];
+      if (!input) return;
+      input.addEventListener('input', () => {
+        const hex = canonicalizeHex(input.value);
+        if (!hex) return;
+        state.recipeSettings.colors[name] = hex;
+        renderColorState();
+        persistState();
+      });
+      input.addEventListener('change', () => {
+        const hex = canonicalizeHex(input.value);
+        if (!hex) return;
+        state.recipeSettings.colors[name] = hex;
+        renderColorState();
+        persistState();
+      });
+    });
+    Object.keys(dom.recipeOpacityInputs).forEach((name) => {
+      const input = dom.recipeOpacityInputs[name];
+      if (!input) return;
+      input.addEventListener('input', () => {
+        state.recipeSettings.opacity[name] = clamp(Number(input.value), 0, 100);
+        renderColorState();
+        persistState();
+      });
+    });
+    dom.recipeVisibilityButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const name = button.dataset.recipeVisibility;
+        if (!Object.prototype.hasOwnProperty.call(state.recipeSettings.visibility, name)) return;
+        state.recipeSettings.visibility[name] = !state.recipeSettings.visibility[name];
+        renderColorState();
+        persistState();
+      });
+    });
+    if (dom.recipeHighlightMode) {
+      dom.recipeHighlightMode.addEventListener('change', () => {
+        state.recipeSettings.highlightMode = dom.recipeHighlightMode.value === 'overlay' ? 'overlay' : 'add';
+        renderColorState();
+        persistState();
+      });
+    }
+    if (dom.resetRecipes) dom.resetRecipes.addEventListener('click', resetRecipeSettings);
+
     dom.lightingButtons.forEach((button) => {
       button.addEventListener('click', () => setLighting(button.dataset.lighting));
     });
@@ -1292,7 +1719,9 @@ async function copyHex(value) {
       });
     }
     if (dom.exportCss) dom.exportCss.addEventListener('click', exportCss);
-    if (dom.exportGpl) dom.exportGpl.addEventListener('click', exportGpl);
+    if (dom.exportCsp) dom.exportCsp.addEventListener('click', exportClipStudioPalette);
+    if (dom.exportPng) dom.exportPng.addEventListener('click', () => exportPaletteImage('png'));
+    if (dom.exportJpg) dom.exportJpg.addEventListener('click', () => exportPaletteImage('jpg'));
     if (dom.studioButton) {
       dom.studioButton.addEventListener('click', () => {
         closeAllDialogs();
