@@ -424,9 +424,6 @@
       recipeHighlightMode: query('#recipe-highlight-mode'),
       resetRecipes: query('#reset-recipes'),
       lightingLabel: query('#lighting-label'),
-      shadowRecipe: query('#shadow-recipe'),
-      highlightRecipe: query('#highlight-recipe'),
-      bounceRecipe: query('#bounce-recipe'),
       moodPrompt: query('#mood-prompt'),
       moodPromptForm: query('#mood-prompt-form'),
       includeBaseColor: query('#include-base-color'),
@@ -644,20 +641,6 @@ async function copyHex(value) {
     dom.generateMood.setAttribute('aria-busy', String(isLoading));
     const label = query('.generate-label', dom.generateMood);
     if (label) label.textContent = isLoading ? 'Generating…' : 'Generate';
-  }
-
-  function renderRecipe(element, prefix, hex, modeNodes) {
-    if (!element) return;
-    element.replaceChildren();
-    element.append(document.createTextNode(`${prefix} `));
-    element.appendChild(createCopyButton(hex));
-    modeNodes.forEach((node, index) => {
-      if (index === 0) element.append(document.createTextNode(node.before));
-      const strong = document.createElement('strong');
-      strong.textContent = node.mode;
-      element.append(strong);
-      element.append(document.createTextNode(node.after));
-    });
   }
 
   function renderMoodPalette() {
@@ -923,7 +906,7 @@ async function copyHex(value) {
       const visible = settings.visibility[name] !== false;
       const stateLabel = query('.recipe-layer-state', button);
       button.setAttribute('aria-pressed', String(visible));
-      button.setAttribute('aria-label', `${visible ? 'Turn off' : 'Turn on'} ${name} recipe layer`);
+      button.setAttribute('aria-label', `${visible ? 'Turn off' : 'Turn on'} ${name} layer`);
       button.classList.toggle('is-hidden', !visible);
       if (stateLabel) stateLabel.textContent = visible ? 'ON' : 'OFF';
     });
@@ -941,7 +924,7 @@ async function copyHex(value) {
     };
     renderColorState();
     persistState();
-    showToast('Layer recipes reset to generated defaults.');
+    showToast('Layer settings reset to generated defaults.');
   }
 
   function renderColorState() {
@@ -1005,17 +988,6 @@ async function copyHex(value) {
 
     const recipeColors = getRecipeColors(colors);
     renderRecipePreview(colors, recipeColors);
-    renderRecipe(dom.shadowRecipe, 'For shadows, use', recipeColors.shadow, [
-      { before: ' on a ', mode: `Multiply ${Math.round(state.recipeSettings.opacity.shadow)}%`, after: ' opacity layer. ' },
-    ]);
-    const highlightModeName = state.recipeSettings.highlightMode === 'overlay' ? 'Overlay' : 'Add (Glow)';
-    renderRecipe(dom.highlightRecipe, 'For highlights and rim light, use', recipeColors.highlight, [
-      { before: ' on a ', mode: `${highlightModeName} ${Math.round(state.recipeSettings.opacity.highlight)}%`, after: ' opacity layer. ' },
-    ]);
-    renderRecipe(dom.bounceRecipe, 'For reflected fill, use', recipeColors.bounce, [
-      { before: ' as a soft bottom-right crescent hugging the shadow edge on a ', mode: `Screen ${Math.round(state.recipeSettings.opacity.bounce)}%`, after: ' opacity layer. ' },
-    ]);
-
     if (dom.moodPrompt && document.activeElement !== dom.moodPrompt) dom.moodPrompt.value = state.moodPrompt;
     if (dom.includeBaseColor) dom.includeBaseColor.checked = state.includeBaseColor;
     if (dom.moodDescription) dom.moodDescription.textContent = state.customMoodActive
