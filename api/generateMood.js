@@ -16,19 +16,19 @@ function sendJson(res, status, payload) {
 }
 
 function extractPalette(text) {
-  if (typeof text !== 'string') throw new Error('Gemini returned no palette text.');
+  if (typeof text !== 'string') throw new Error('The palette service returned no palette text.');
   const jsonText = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
   let parsed;
   try {
     parsed = JSON.parse(jsonText);
   } catch (_error) {
-    throw new Error('Gemini returned invalid JSON.');
+    throw new Error('The palette service returned invalid data.');
   }
   if (!Array.isArray(parsed) || parsed.length !== 5) {
-    throw new Error('Gemini must return exactly five hex colors.');
+    throw new Error('The palette service must return exactly five hex colors.');
   }
   const colors = parsed.map(normalizeHex);
-  if (colors.some((color) => !color)) throw new Error('Gemini returned a non-hex color.');
+  if (colors.some((color) => !color)) throw new Error('The palette service returned a non-hex color.');
   return colors;
 }
 
@@ -48,7 +48,7 @@ module.exports = async function handler(req, res) {
     return sendJson(res, 400, { error: useBaseColor ? 'Prompt, baseColor, and lighting are required.' : 'Prompt is required.' });
   }
   if (!process.env.GEMINI_API_KEY) {
-    return sendJson(res, 500, { error: 'GEMINI_API_KEY is not configured on the server.' });
+    return sendJson(res, 500, { error: 'Palette generation is not configured on the server.' });
   }
 
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`;
@@ -72,7 +72,7 @@ module.exports = async function handler(req, res) {
     const data = await response.json();
     if (!response.ok) {
       return sendJson(res, response.status >= 500 ? 502 : response.status, {
-        error: data?.error?.message || 'Gemini request failed.',
+        error: data?.error?.message || 'Palette generation request failed.',
       });
     }
 
