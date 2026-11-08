@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#151517">
+  <meta name="description" content="A color workspace for digital artists. Explore hue-shifted lighting, color harmonies, painting recipes, and atmospheric palettes.">
+  <title>Pigment — Digital Color Studio</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <svg class="svg-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="icon-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18h1a2.5 2.5 0 0 0 2-4c-.8-1 .1-2.5 1.4-2.5H18A3 3 0 0 0 21 12a9 9 0 0 0-9-9Z"/><circle cx="7.5" cy="10" r=".7"/><circle cx="11" cy="6.8" r=".7"/><circle cx="16" cy="8" r=".7"/></symbol>
+    <symbol id="icon-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></symbol>
+    <symbol id="icon-book" viewBox="0 0 24 24"><path d="M12 6v15M3 4h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5v15h-5a4 4 0 0 0-4 2 4 4 0 0 0-4-2H3Z"/></symbol>
+    <symbol id="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></symbol>
+    <symbol id="icon-snow" viewBox="0 0 24 24"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9 5l3 3 3-3M9 19l3-3 3 3M5 11l4-1-1-4m11 7-4 1 1 4M5 13l4 1-1 4m11-7-4-1 1-4"/></symbol>
+    <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M4 16v4h16v-4"/></symbol>
+    <symbol id="icon-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 9V4H4v11h5"/></symbol>
+    <symbol id="icon-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="icon-reset" viewBox="0 0 24 24"><path d="M3 10a9 9 0 1 1 1 8M3 4v6h6"/></symbol>
+    <symbol id="icon-shuffle" viewBox="0 0 24 24"><path d="M3 6h3c5 0 7 12 12 12h3m-3-3 3 3-3 3M3 18h3c5 0 7-12 12-12h3m-3-3 3 3-3 3"/></symbol>
+    <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
+    <symbol id="icon-layers" viewBox="0 0 24 24"><path d="m12 3 10 6-10 6L2 9Zm-9 10 9 5 9-5M3 17l9 5 9-5"/></symbol>
+    <symbol id="icon-spark" viewBox="0 0 24 24"><path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5ZM20 2v4m-2-2h4"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="icon-save" viewBox="0 0 24 24"><path d="M5 3h14v19l-7-4-7 4Z"/></symbol>
+    <symbol id="icon-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.1"/></symbol>
+    <symbol id="icon-wheel" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v6m0 6v6M3 12h6m6 0h6M5.6 5.6l4.3 4.3m4.2 4.2 4.3 4.3M5.6 18.4l4.3-4.3m4.2-4.2 4.3-4.3"/></symbol>
+  </svg>
+  <a class="skip-link" href="#main">Skip to color studio</a>
+  <aside class="sidebar" aria-label="Studio navigation">
+    <a class="brand" href="./" aria-label="Pigment home"><span>pigment<span class="brand-dot">.</span></span></a>
+    <div class="sidebar-label">YOUR WORKSPACE</div>
+    <nav class="nav-links">
+      <button id="studio-button" class="nav-button active" aria-current="page"><svg><use href="#icon-palette"/></svg><span>Color studio</span><span class="nav-active-dot"></span></button>
+      <button id="saved-palettes-button" class="nav-button"><svg><use href="#icon-grid"/></svg><span>Saved palettes</span></button>
+      <button id="guide-button" class="nav-button"><svg><use href="#icon-book"/></svg><span>Painting guide</span></button>
+    </nav>
+  </aside>
+  <div class="workspace">
+    <header class="topbar">
+      <div class="breadcrumb"><svg><use href="#icon-grid"/></svg><span>Workspace</span><span class="slash">/</span><strong>Color studio</strong></div>
+      <div class="topbar-actions">
+        <button id="grayscale-toggle" class="grayscale-button" aria-pressed="false" title="Check your colors in grayscale"><svg><use href="#icon-eye"/></svg><span>Grayscale view</span><span class="toggle-track"><span></span></span></button>
+        <span class="toolbar-divider"></span>
+        <button id="export-palette" class="button primary"><svg><use href="#icon-download"/></svg><span>Export palette</span></button>
+      </div>
+    </header>
+    <main id="main">
+      <section class="page-heading"><div><h1>Color, with intention<span>.</span></h1></div><button id="save-palette" class="button secondary"><svg><use href="#icon-save"/></svg>Save palette</button></section>
+      <div class="studio-grid">
+        <section class="card base-card" aria-labelledby="base-title">
+          <div class="card-heading"><div class="card-title"><span class="section-icon"><svg><use href="#icon-palette"/></svg></span><h2 id="base-title">Base color & lighting</h2></div><button id="reset-color" class="icon-button" aria-label="Reset base color" title="Reset base color"><svg><use href="#icon-reset"/></svg></button></div>
+          <div class="base-layout">
+            <div class="color-controls">
+              <div class="field-label"><label for="base-color">BASE COLOR</label><span class="hue-readout">H <output id="hue-value">17</output>°</span><button id="random-color" class="inline-action" type="button" title="Explore a random base color" aria-label="Choose a random base color"><svg><use href="#icon-shuffle"/></svg></button></div>
+              <div class="hex-field"><input id="base-color" type="color" value="#D48C70" aria-label="Choose base color"><input id="hex-input" type="text" value="#D48C70" maxlength="7" spellcheck="false" aria-label="Base color hex code"><span class="hex-format">HEX</span></div>
+              <div class="slider-field"><label for="saturation">Saturation <output id="saturation-value" for="saturation">54%</output></label><input id="saturation" type="range" min="0" max="100" value="54"></div>
+              <div class="slider-field"><label for="lightness">Lightness <output id="lightness-value" for="lightness">64%</output></label><input id="lightness" type="range" min="0" max="100" value="64"></div>
+              <div class="field-label lighting-field-label">LIGHT TEMPERATURE</div>
+              <div class="segmented lighting-selector" aria-label="Light temperature"><button data-lighting="warm" class="active" aria-pressed="true"><svg><use href="#icon-sun"/></svg>Warm</button><button data-lighting="cool" aria-pressed="false"><svg><use href="#icon-snow"/></svg>Cool</button></div>
+            </div>
+            <div class="preview-scene"><div class="preview-tag"><span class="status-dot"></span>LIVE PREVIEW</div><div class="light-ray ray-one"></div><div class="light-ray ray-two"></div><div class="light-origin"><svg><use href="#icon-sun"/></svg></div><div class="sphere-shadow"></div><div id="sphere" class="sphere" role="img" aria-label="Live shaded sphere using highlight, midtone and core shadow colors"></div><div class="preview-floor"></div><div class="preview-caption"><span id="lighting-label">Warm lighting</span><span>●</span> Matte sphere</div></div>
+          </div>
+          <div class="painting-swatches">
+            <div id="shadow-swatch" class="swatch painting-swatch"><div class="painting-color"><label class="color-picker-control" for="shadow-color"><input id="shadow-color" class="swatch-color-input" type="color" value="#884078" aria-label="Customize shadow color"><span class="color-picker-hint">EDIT</span></label><button id="shadow-hex" class="swatch-hex swatch-copy" type="button" data-copy="#884078" aria-label="Copy shadow color #884078">#884078</button><button id="shadow-auto" class="auto-reset" type="button" hidden>Auto</button><button class="visibility-toggle" type="button" data-visibility="shadow" aria-pressed="true" aria-label="Hide shadow light on sphere" title="Toggle shadow on sphere"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/><path class="eye-slash" d="m4 4 16 16"/></svg></button></div><span class="swatch-label">Shadow <span id="shadow-shift">Cooler hue</span></span></div>
+            <div id="midtone-swatch" class="swatch painting-swatch"><div class="painting-color"><span id="midtone-dot" class="color-dot" aria-hidden="true"></span><button id="midtone-hex" class="swatch-hex swatch-copy" type="button" data-copy="#D48C70" aria-label="Copy base color #D48C70">#D48C70</button></div><span class="swatch-label">Midtone <span>Base color</span></span></div>
+            <div id="highlight-swatch" class="swatch painting-swatch"><div class="painting-color"><label class="color-picker-control" for="highlight-color"><input id="highlight-color" class="swatch-color-input" type="color" value="#E8C4AE" aria-label="Customize highlight color"><span class="color-picker-hint">EDIT</span></label><button id="highlight-hex" class="swatch-hex swatch-copy" type="button" data-copy="#E8C4AE" aria-label="Copy highlight color #E8C4AE">#E8C4AE</button><button id="highlight-auto" class="auto-reset" type="button" hidden>Auto</button><button class="visibility-toggle" type="button" data-visibility="highlight" aria-pressed="true" aria-label="Hide highlight light on sphere" title="Toggle highlight on sphere"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/><path class="eye-slash" d="m4 4 16 16"/></svg></button></div><span class="swatch-label">Highlight <span id="highlight-shift">Warmer hue</span></span></div>
+            <div id="bounce-swatch" class="swatch painting-swatch bounce-swatch"><div class="painting-color"><label class="color-picker-control" for="bounce-color"><input id="bounce-color" class="swatch-color-input" type="color" value="#91A8B2" aria-label="Customize bounce light color"><span class="color-picker-hint">EDIT</span></label><button id="bounce-hex" class="swatch-hex swatch-copy" type="button" data-copy="#91A8B2" aria-label="Copy bounce light color #91A8B2">#91A8B2</button><button id="bounce-auto" class="auto-reset" type="button" hidden>Auto</button><button class="visibility-toggle" type="button" data-visibility="bounce" aria-pressed="true" aria-label="Hide bounce light on sphere" title="Toggle bounce light on sphere"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/><path class="eye-slash" d="m4 4 16 16"/></svg></button></div><span class="swatch-label">Bounce light <span id="bounce-shift">Cool ambient fill</span></span></div>
+          </div>
+        </section>
+        <section class="card harmony-card" aria-labelledby="harmony-title">
+          <div class="card-heading"><div class="card-title"><span class="section-icon"><svg><use href="#icon-wheel"/></svg></span><h2 id="harmony-title">Color harmonies</h2></div><span class="small-badge">HSL WHEEL</span></div>
+          <div class="segmented harmony-selector" aria-label="Color harmony"><button data-harmony="complementary" aria-pressed="false">Complementary</button><button data-harmony="analogous" class="active" aria-pressed="true">Analogous</button><button data-harmony="triadic" aria-pressed="false">Triadic</button><button data-harmony="split" aria-pressed="false">Split-complementary</button></div>
+          <div class="harmony-layout"><div class="wheel-wrapper"><canvas id="color-wheel" width="280" height="280" tabindex="0" role="slider" aria-label="Base hue on color wheel. Drag or use arrow keys to change hue." aria-valuemin="0" aria-valuemax="359" aria-valuenow="17"></canvas><div class="wheel-center"><span>BASE HUE</span><strong><output id="wheel-hue">17</output><small>°</small></strong><span class="wheel-center-hint">DRAG TO EXPLORE</span></div></div><div id="harmony-swatches" class="harmony-swatches" aria-label="Harmony colors"></div></div>
+          <div class="card-footnote"><svg><use href="#icon-info"/></svg><p id="harmony-description">Neighboring hues for a naturally cohesive palette.</p></div>
+        </section>
+        <section class="card recipes-card" aria-labelledby="recipes-title">
+          <div class="card-heading"><div class="card-title"><span class="section-icon"><svg><use href="#icon-layers"/></svg></span><h2 id="recipes-title">Layer recipes</h2></div><span class="small-badge">PAINT SMARTER</span></div>
+          <div class="recipe-row"><div class="recipe-icon shadow-recipe-icon"><svg><use href="#icon-layers"/></svg></div><div><h3>Give your shadows depth <span class="recipe-tag">SHADOW</span></h3><p id="shadow-recipe">For shadows, use your shadow color on a <strong>Multiply</strong> layer at <strong>60% opacity</strong>.</p></div></div>
+          <div class="recipe-row"><div class="recipe-icon highlight-recipe-icon"><svg><use href="#icon-sun"/></svg></div><div><h3>Let the light in <span class="recipe-tag">HIGHLIGHT</span></h3><p id="highlight-recipe">For highlights, use your highlight color on an <strong>Add (Glow)</strong> or <strong>Overlay</strong> layer.</p></div></div>
+          <div class="recipe-row"><div class="recipe-icon bounce-recipe-icon"><svg><use href="#icon-snow"/></svg></div><div><h3>Reflect some color back <span class="recipe-tag">BOUNCE</span></h3><p id="bounce-recipe">Use your bounce-light color as a restrained reflected fill near the shadow edge.</p></div></div>
+          <div class="recipe-note"><svg><use href="#icon-info"/></svg><span>A starting point, not a rule. Blend results depend on your canvas colors.</span></div>
+        </section>
+        <section class="card mood-card" aria-labelledby="mood-title">
+          <div class="card-heading"><div class="card-title"><span class="section-icon"><svg><use href="#icon-spark"/></svg></span><h2 id="mood-title">Set the mood</h2></div><span class="small-badge">5-COLOR PALETTES</span></div>
+          <form id="mood-prompt-form" class="mood-prompt-form"><label for="mood-prompt">Describe your mood, scene, or atmosphere</label><div class="mood-prompt-row"><input id="mood-prompt" name="mood" type="text" maxlength="120" autocomplete="off" placeholder="Describe your mood…" aria-describedby="mood-prompt-help"><button id="generate-mood" class="button generate-button" type="submit" aria-busy="false"><svg><use href="#icon-spark"/></svg><span class="generate-label">Generate</span></button></div><div class="mood-context-toggle" title="When ON, Gemini harmonizes the palette with your selected base color. When OFF, Gemini ignores the base color and follows only your mood description."><label class="switch-label" for="include-base-color"><input id="include-base-color" type="checkbox" checked aria-describedby="mood-context-help"><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span><span>Harmonize with base color</span></label><span id="mood-context-help" class="mood-context-help">ON · Gemini harmonizes the palette with your selected base color and lighting.</span></div><span id="mood-prompt-help" class="mood-prompt-help">Gemini creates five colors from your description, with optional base-color harmonization.</span></form>
+          <div id="mood-swatches" class="mood-swatches" aria-label="Mood palette colors"></div>
+          <p id="mood-description" class="mood-description"></p>
+        </section>
+      </div>
+      <footer class="workspace-footer"><span><svg><use href="#icon-copy"/></svg>Click a light chip to edit. Click a hex code to copy.</span><span><span class="status-dot"></span><span id="grayscale-status">Color view</span><span class="footer-separator">/</span>HSL color space</span></footer>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden><svg aria-hidden="true"><use href="#icon-check"/></svg><span id="toast-message"></span></div>
+  <dialog id="saved-dialog" aria-labelledby="saved-title"><div class="dialog-panel"><div class="dialog-header"><span class="eyebrow">YOUR COLLECTION</span><button class="icon-button" data-close-dialog aria-label="Close saved palettes"><svg><use href="#icon-close"/></svg></button></div><h2 id="saved-title">Saved palettes<span>.</span></h2><p class="dialog-description">Little collections for your next big idea. Saved in this browser.</p><div id="saved-palettes-list"></div></div></dialog>
+  <dialog id="guide-dialog" aria-labelledby="guide-title"><div class="dialog-panel"><div class="dialog-header"><span class="eyebrow">A SMALL PAINTING GUIDE</span><button class="icon-button" data-close-dialog aria-label="Close painting guide"><svg><use href="#icon-close"/></svg></button></div><h2 id="guide-title">Think beyond the hex<span>.</span></h2><p class="dialog-description">Use the studio as a starting point, then trust your eye.</p><div class="guide-entry"><span>01</span><div><h3>Shift hue, not just value.</h3><p>Warm light often pairs beautifully with cooler shadows. Cool lighting reverses that relationship. Pigment shifts hue, saturation, and lightness together to give you a more expressive starting point.</p></div></div><div class="guide-entry"><span>02</span><div><h3>Let harmonies do the heavy lifting.</h3><p>Analogous colors create cohesion. Complementary colors create tension. Triadic palettes spread color around the wheel, while split-complementary palettes soften the contrast.</p></div></div><div class="guide-entry"><span>03</span><div><h3>Check the values.</h3><p>Turn on Grayscale view to see whether light and dark areas still read clearly. HSL lightness is not perceived luminance, so two different hues with the same lightness may look very different in grayscale.</p></div></div><div class="guide-entry"><span>04</span><div><h3>Keep your layers flexible.</h3><p>Multiply darkens underlying colors; Add (Glow) builds light; Overlay increases contrast. Names and results vary by painting app. Start with the suggested opacity, then adjust for your actual canvas.</p></div></div></div></dialog>
+  <dialog id="export-dialog" aria-labelledby="export-title"><div class="dialog-panel"><div class="dialog-header"><span class="eyebrow">FROM STUDIO TO CANVAS</span><button class="icon-button" data-close-dialog aria-label="Close export palette"><svg><use href="#icon-close"/></svg></button></div><h2 id="export-title">Take your colors with you<span>.</span></h2><p id="export-summary" class="dialog-description">Your colors, ready for your next canvas.</p><button id="export-gpl" class="export-option"><span class="export-file-icon">GPL</span><span><strong>Artist palette</strong><small>GIMP palette file · compatible with Krita</small></span><svg><use href="#icon-download"/></svg></button><button id="export-css" class="export-option"><span class="export-file-icon">CSS</span><span><strong>CSS color tokens</strong><small>Named custom properties for creative projects</small></span><svg><use href="#icon-download"/></svg></button><p class="export-note">Includes your lighting colors, active harmony, and mood palette.</p></div></dialog>
+  <noscript><div class="noscript-notice">Enable JavaScript to explore live color harmonies and palettes.</div></noscript>
+</body>
+</html>
